@@ -24,7 +24,7 @@ class SocketServer : public Singleton<SocketServer> {
     friend class Singleton<SocketServer>;
 
     const string c_socketPath = "/tmp/zoom_bot/sock/meeting.sock";
-    // const string c_socketPath = "/tmp/meeting-6.sock";
+    
     const int c_bufferSize = 1024;
 
     struct sockaddr_un m_addr;
