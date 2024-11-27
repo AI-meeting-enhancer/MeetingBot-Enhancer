@@ -1,0 +1,9 @@
+{
+  "name": "zoom-bot",
+  "version": "1",
+  "dependencies": [
+    "ada-url",
+    "cli11",
+    "jwt-cpp"
+  ]
+}

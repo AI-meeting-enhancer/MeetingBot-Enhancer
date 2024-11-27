@@ -1,0 +1,19 @@
+# output files
+output/*
+
+# build files & C++ SDK
+bots/zoom_bot/lib/zoomsdk/*
+bots/zoom_bot/build
+bots/zoom_bot/CMakeFiles
+
+# config files
+bots/zoom_bot/config.toml
+
+# log files
+bots/zoom_bot/socket_data.log
+
+# python pre-built files
+*/__pycache__
+
+# credentials
+credentials/*
