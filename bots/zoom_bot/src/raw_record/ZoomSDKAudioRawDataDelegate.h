@@ -29,12 +29,12 @@ class ZoomSDKAudioRawDataDelegate : public IZoomSDKAudioRawDataDelegate {
     void writeToFile(const string& path, AudioRawData* data);
 public:
 
-    // Add a method to set the display name for a user
-    void setUser DisplayName(uint32_t node_id, const std::string& displayName);
-
     ZoomSDKAudioRawDataDelegate(bool useMixedAudio, bool transcribe);
     void setDir(const string& dir);
     void setFilename(const string& filename);
+    
+    // Add a method to set the display name for a user
+    void setUser_DisplayName(uint32_t node_id, const std::string& displayName);
 
     void onMixedAudioRawDataReceived(AudioRawData* data) override;
     void onOneWayAudioRawDataReceived(AudioRawData* data, uint32_t node_id) override;

@@ -1,4 +1,5 @@
 #include "ZoomSDKAudioRawDataDelegate.h"
+#include <vector>
 
 
 ZoomSDKAudioRawDataDelegate::ZoomSDKAudioRawDataDelegate(bool useMixedAudio = true, bool transcribe = false) : m_useMixedAudio(useMixedAudio), m_transcribe(transcribe){
@@ -29,7 +30,7 @@ void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data
     // writeToFile(path.str(), data);
 }
 
-void ZoomSDKAudioRawDataDelegate::setUser DisplayName(uint32_t node_id, const std::string& displayName) {
+void ZoomSDKAudioRawDataDelegate::setUser_DisplayName(uint32_t node_id, const std::string& displayName) {
     m_userDisplayNames[node_id] = displayName;
 }
 
@@ -37,7 +38,7 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData* dat
     if (m_useMixedAudio) return;
 
     // Prepare the socket message
-    const unsigned char* buffer = data->GetBuffer();
+    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(data->GetBuffer());
     int bufferLen = data->GetBufferLen();
 
     // Get the display name for the current user
