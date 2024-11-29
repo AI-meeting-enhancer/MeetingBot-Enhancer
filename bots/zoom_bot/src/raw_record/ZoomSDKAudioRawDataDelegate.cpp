@@ -29,17 +29,33 @@ void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data
     // writeToFile(path.str(), data);
 }
 
-
+void ZoomSDKAudioRawDataDelegate::setUser DisplayName(uint32_t node_id, const std::string& displayName) {
+    m_userDisplayNames[node_id] = displayName;
+}
 
 void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData* data, uint32_t node_id) {
     if (m_useMixedAudio) return;
 
-    stringstream path;
-    path << m_dir << "/node-" << node_id << ".pcm";
-    // uncomment the below to enable recording to file
-    // writeToFile(path.str(), data);
-}
+    // Prepare the socket message
+    const unsigned char* buffer = data->GetBuffer();
+    int bufferLen = data->GetBufferLen();
 
+    // Get the display name for the current user
+    std::string displayName = m_userDisplayNames[node_id];
+
+    // Create a message to send: node_id (1 byte) + display name length (1 byte) + display name + audio data
+    std::vector<unsigned char> message;
+    message.push_back(static_cast<unsigned char>(node_id)); // Node ID
+    message.push_back(static_cast<unsigned char>(displayName.length())); // Length of display name
+    message.insert(message.end(), displayName.begin(), displayName.end()); // Display name
+    message.insert(message.end(), buffer, buffer + bufferLen); // Audio data
+
+    // Send the audio data to the socket
+    int ret = server.writeBuf(message.data(), message.size());
+    if (ret < 0) {
+        Log::error("Failed to send audio data to socket for node " + std::to_string(node_id));
+    }
+}
 void ZoomSDKAudioRawDataDelegate::onShareAudioRawDataReceived(AudioRawData* data) {
     stringstream ss;
     ss << "Shared Audio Raw data: " << data->GetBufferLen() / 10 << "k at " << data->GetSampleRate() << "Hz";

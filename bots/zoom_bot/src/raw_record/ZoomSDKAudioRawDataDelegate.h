@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 #include <sstream>
 
 #include "zoom_sdk_raw_data_def.h"
@@ -16,6 +17,8 @@ using namespace std;
 using namespace ZOOMSDK;
 
 class ZoomSDKAudioRawDataDelegate : public IZoomSDKAudioRawDataDelegate {
+    std::unordered_map<uint32_t, std::string> m_userDisplayNames; // Map to store display names
+
     SocketServer server;
 
     string m_dir = "out";
@@ -25,6 +28,10 @@ class ZoomSDKAudioRawDataDelegate : public IZoomSDKAudioRawDataDelegate {
 
     void writeToFile(const string& path, AudioRawData* data);
 public:
+
+    // Add a method to set the display name for a user
+    void setUser DisplayName(uint32_t node_id, const std::string& displayName);
+
     ZoomSDKAudioRawDataDelegate(bool useMixedAudio, bool transcribe);
     void setDir(const string& dir);
     void setFilename(const string& filename);
