@@ -27,6 +27,7 @@ This project is innovative solution about AI meeting enhancing by applying bot w
 ```
 
 ### 4. Start the server
+Download proper SDK from Zoom marketplace and copy it into ./bots/zoombot/lib/zoomsdk
 Bot run:
 
 ```bash

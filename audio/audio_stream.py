@@ -68,7 +68,7 @@ def stream_audio_to_text():
             speaker_number = result.alternatives[0].words[0].speaker_tag if result.alternatives[0].words else None
 
             if result.is_final:
-                print(f"Final Transcript: {transcript}")
+                # print(f"Final Transcript: {transcript}")
 
                 if speaker_number:
                     if speaker_number not in speaker_buffer:
