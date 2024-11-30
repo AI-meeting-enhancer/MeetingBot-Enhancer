@@ -1,4 +1,5 @@
 import threading
+import socket
 from google.cloud import speech
 from .socket_connection import connect_unix_socket
 from transcription.transcription_handler import save_transcription_in_real_time
@@ -7,8 +8,6 @@ from transcription.summary_generator import generate_meeting_summary
 
 client = speech.SpeechClient()
 
-speaker_buffer = {}
-
 def audio_generator(sock):
     buffer_size = 4096
     while True:
@@ -16,74 +15,83 @@ def audio_generator(sock):
             data = sock.recv(buffer_size)
             if not data:
                 break
-            yield data
+            
+            # Ensure data is valid and extract display name and audio
+            if len(data) < 2:
+                continue  # Not enough data to extract node ID and display name length
+
+            node_id = data[0]  # Node ID (1 byte)
+            display_name_length = data[1]  # Length of display name (1 byte)
+
+            if len(data) < 2 + display_name_length:
+                continue  # Not enough data to extract the full display name
+
+            # Extract display name safely
+            display_name = data[2:2 + display_name_length].decode('utf-8', errors='ignore')  # Ignore errors if any
+            audio_data = data[2 + display_name_length:]  # Remaining data is audio
+
+            yield (display_name, audio_data)  # Yield tuple of (display_name, audio_data)
+        
         except Exception as e:
             print(f"Socket error: {e}")
             break
 
 def stream_audio_to_text():
     sock = connect_unix_socket()
-    # Configure Speech-to-Text API
-    
-    rate = 32000
+    if not sock:
+        return
 
-    # Google Cloud Speech-to-Text API config with dynamic diarization
-    diarization_config = speech.SpeakerDiarizationConfig(
-        enable_speaker_diarization=True,
-        min_speaker_count=2,
-        max_speaker_count=5
-    )
+    audio_stream = audio_generator(sock)
 
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=rate,
-        language_code="en-US",
-        enable_automatic_punctuation=True,
-        diarization_config=diarization_config
-    )
+    # Prepare to send audio to the Speech API
+    requests = []
+    current_display_name = None
 
+    # Create a streaming configuration
     streaming_config = speech.StreamingRecognitionConfig(
-        config=config,
-        interim_results=True
+        config=speech.RecognitionConfig(
+            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=Config.SAMPLE_RATE,
+            language_code="en-US",
+            enable_automatic_punctuation=True,
+        ),
+        interim_results=True,
     )
 
+    # Create a generator for the requests
+    def generate_requests():
+        for display_name, audio in audio_stream:
+            yield speech.StreamingRecognizeRequest(audio_content=audio)
 
-    # Send the audio stream to the Google Speech API
-    requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in audio_generator(sock))
-    
-    responses = client.streaming_recognize(config=streaming_config, requests=requests)
+    # Start the streaming recognition
+    responses = client.streaming_recognize(config=streaming_config, requests=generate_requests())
 
-    
-    try:
-        for response in responses:
-            if not response.results:
-                continue
+    # Process responses
+    for response in responses:
+        if not response.results:
+            continue
 
-            result = response.results[0]
-            if not result.alternatives:
-                continue
+        result = response.results[0]
+        if not result.alternatives:
+            continue
 
-            # Extract transcript and speaker information
-            transcript = result.alternatives[0].transcript
-            speaker_number = result.alternatives[0].words[0].speaker_tag if result.alternatives[0].words else None
+        transcript = result.alternatives[0].transcript
+        current_display_name = response.results[0].alternatives[0].words[0].speaker_tag if response.results[0].alternatives[0].words else None
 
-            if result.is_final:
-                # print(f"Final Transcript: {transcript}")
+        if result.is_final:
+            save_transcription_in_real_time(current_display_name, transcript, Config.OUTPUT_FILE)
 
-                if speaker_number:
-                    if speaker_number not in speaker_buffer:
-                        speaker_buffer[speaker_number] = ""
-                    speaker_buffer[speaker_number] += f" {transcript}"
-
-                    save_transcription_in_real_time(speaker_number, speaker_buffer[speaker_number], Config.OUTPUT_FILE )
-                    speaker_buffer[speaker_number] = ""  # Clear buffer for the next round
-
-    except Exception as e:
-        print("Error during streaming:", e)
-    finally:
-        sock.close()
-        print("Socket closed.")
-        generate_meeting_summary()
-
-    # Process responses (similar to your original implementation)
     sock.close()
+    print("Socket closed.")
+    generate_meeting_summary()
+
+# To run the stream_audio_to_text in a separate thread
+if __name__ == "__main__":
+    transcription_thread = threading.Thread(target=stream_audio_to_text)
+    transcription_thread.start()
+
+    try:
+        transcription_thread.join()
+    except KeyboardInterrupt:
+        print("\nTerminating transcription...")
+        transcription_thread.join()
