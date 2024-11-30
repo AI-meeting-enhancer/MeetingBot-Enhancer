@@ -35,6 +35,7 @@ void ZoomSDKAudioRawDataDelegate::setUser_DisplayName(uint32_t node_id, const st
 }
 
 void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData* data, uint32_t node_id) {
+    Log::info(m_useMixedAudio+"d");
     if (m_useMixedAudio) return;
 
     // Prepare the socket message
