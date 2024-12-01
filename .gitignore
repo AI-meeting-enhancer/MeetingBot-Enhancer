@@ -3,7 +3,7 @@ output/*
 
 # build files & C++ SDK
 bots/zoom_bot/lib/zoomsdk/*
-bots/zoom_bot/build
+bots/zoom_bot/build*
 bots/zoom_bot/CMakeFiles
 
 # config files
