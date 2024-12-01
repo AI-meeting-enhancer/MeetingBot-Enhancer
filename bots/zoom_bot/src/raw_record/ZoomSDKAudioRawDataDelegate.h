@@ -9,6 +9,7 @@
 
 #include "zoom_sdk_raw_data_def.h"
 #include "rawdata/rawdata_audio_helper_interface.h"
+// #include "meeting_service_components/meeting_participants_ctrl_interface.h"
 
 #include "../util/Log.h"
 #include "../util/SocketServer.h"
@@ -41,6 +42,9 @@ public:
     void onShareAudioRawDataReceived(AudioRawData* data) override;
 
     void onOneWayInterpreterAudioRawDataReceived(AudioRawData* data_, const zchar_t* pLanguageName) override {};
+
+    // inline int ZoomSDKAudioRawDataDelegateImpl::GetUserByUserID(uint32_t userid) override{};
+
 };
 
 

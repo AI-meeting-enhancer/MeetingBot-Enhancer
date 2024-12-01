@@ -1,16 +1,23 @@
 #include "ZoomSDKAudioRawDataDelegate.h"
+#include "zoom_sdk_def.h" // or the correct header file that defines AudioType
+#include <unordered_map>
 #include <vector>
 
+std::unordered_map<std::string, int> userList; //[{no:0,name:"Bob",node_id:23452}, {no:1, name:"John",node_id:32421}]
 
-ZoomSDKAudioRawDataDelegate::ZoomSDKAudioRawDataDelegate(bool useMixedAudio = true, bool transcribe = false) : m_useMixedAudio(useMixedAudio), m_transcribe(transcribe){
+ZoomSDKAudioRawDataDelegate::ZoomSDKAudioRawDataDelegate(bool useMixedAudio = true, bool transcribe = false) : m_useMixedAudio(useMixedAudio), m_transcribe(transcribe)
+{
     server.start();
 }
 
-void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data) {
-    if (!m_useMixedAudio) return;
+void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data)
+{
+    if (!m_useMixedAudio)
+        return;
 
     // write to socket
-    if (m_transcribe) {
+    if (m_transcribe)
+    {
         server.writeBuf(data->GetBuffer(), data->GetBufferLen());
     }
 
@@ -18,65 +25,83 @@ void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data
     if (m_dir.empty())
         return Log::error("Output Directory cannot be blank");
 
-
     if (m_filename.empty())
         m_filename = "test.pcm";
 
-
     stringstream path;
     path << m_dir << "/" << m_filename;
-    
+
     // uncomment the below to enable recording to file
     // writeToFile(path.str(), data);
 }
 
-void ZoomSDKAudioRawDataDelegate::setUser_DisplayName(uint32_t node_id, const std::string& displayName) {
-    m_userDisplayNames[node_id] = displayName;
-}
+void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *data, uint32_t node_id)
+{
+    if (m_useMixedAudio)
+        return;
 
-void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData* data, uint32_t node_id) {
-    Log::info(m_useMixedAudio+"d");
-    if (m_useMixedAudio) return;
+    if (data == nullptr)
+    {
+        Log::error("Received null AudioRawData");
+        return;
+    }
 
-    // Prepare the socket message
-    const unsigned char* buffer = reinterpret_cast<const unsigned char*>(data->GetBuffer());
     int bufferLen = data->GetBufferLen();
+    if (bufferLen <= 0)
+    {
+        Log::error("Received audio data with invalid length");
+        return;
+    }
 
-    // Get the display name for the current user
-    std::string displayName = m_userDisplayNames[node_id];
+    // Check if the current speaker is a new member
+    auto it = userList.find(std::to_string(node_id));
+    int index = 0;
 
-    // Create a message to send: node_id (1 byte) + display name length (1 byte) + display name + audio data
-    std::vector<unsigned char> message;
-    message.push_back(static_cast<unsigned char>(node_id)); // Node ID
-    message.push_back(static_cast<unsigned char>(displayName.length())); // Length of display name
-    message.insert(message.end(), displayName.begin(), displayName.end()); // Display name
-    message.insert(message.end(), buffer, buffer + bufferLen); // Audio data
+    if (it == userList.end()) // if current speaker is new member
+    {
+        index = userList.size();                   // Use the current size as the index
+        userList[std::to_string(node_id)] = index; // Store the new user with their index
+        Log::info(std::to_string(index));
+    }
+    else
+    {
+        index = it->second; // Retrieve the existing index
+        Log::info(std::to_string(index));
+    }
 
-    // Send the audio data to the socket
-    int ret = server.writeBuf(message.data(), message.size());
-    if (ret < 0) {
-        Log::error("Failed to send audio data to socket for node " + std::to_string(node_id));
+    // Create a buffer to hold the index and audio data
+    std::vector<char> buffer(sizeof(int) + bufferLen);
+    // Convert index to little-endian byte order
+    uint32_t index_le = htole32(index); // Use htole32 for little-endian conversion
+    memcpy(buffer.data(), &index_le, sizeof(uint32_t));
+    memcpy(buffer.data() + sizeof(int), data->GetBuffer(), bufferLen); // Copy the audio data into the buffer
+
+    // Write to socket
+    if (m_transcribe)
+    {
+        server.writeBuf(buffer.data(), buffer.size()); // Send the combined index and audio data
     }
 }
-void ZoomSDKAudioRawDataDelegate::onShareAudioRawDataReceived(AudioRawData* data) {
+
+void ZoomSDKAudioRawDataDelegate::onShareAudioRawDataReceived(AudioRawData *data)
+{
     stringstream ss;
     ss << "Shared Audio Raw data: " << data->GetBufferLen() / 10 << "k at " << data->GetSampleRate() << "Hz";
     Log::info(ss.str());
 }
 
-
 void ZoomSDKAudioRawDataDelegate::writeToFile(const string &path, AudioRawData *data)
 {
     static std::ofstream file;
-	file.open(path, std::ios::out | std::ios::binary | std::ios::app);
-    
-	if (!file.is_open())
+    file.open(path, std::ios::out | std::ios::binary | std::ios::app);
+
+    if (!file.is_open())
         return Log::error("failed to open audio file path: " + path);
-	
+
     file.write(data->GetBuffer(), data->GetBufferLen());
 
     file.close();
-	file.flush();
+    file.flush();
 
     stringstream ss;
     ss << "Writing " << data->GetBufferLen() << "b to " << path << " at " << data->GetSampleRate() << "Hz";
