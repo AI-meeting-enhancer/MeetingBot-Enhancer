@@ -263,7 +263,30 @@ SDKError Zoom::startRawRecording() {
             return err; // Return error status
     }
 
+    getUserNames();
+
     return SDKERR_SUCCESS; // Return success status
+}
+
+// Get user displayname for participants
+SDKError Zoom::getUserNames() {
+    IMeetingParticipantsController* participantCtl = m_meetingService->GetMeetingParticipantsController(); // Get participants controller
+    IList<unsigned int>* participants = participantCtl->GetParticipantsList(); // Get participants list
+    for (int i = 0; i < participants->GetCount(); i++) {
+        unsigned int participant_id = participants->GetItem(i); // Get participant
+        IUserInfo* participant_info = participantCtl->GetUserByUserID(participant_id); 
+        const zchar_t* displayName = participant_info->GetUserName(); // Get participant's display name
+        stringstream log_info;
+        log_info << "Participant: " << displayName << "(" << participant_id << ")" << endl;
+        Log::info(log_info.str());
+    }
+
+    return SDKERR_SUCCESS; // Return success status
+}
+
+// Get ParticipantsCtl instance for the meeting
+IMeetingParticipantsController* Zoom::getParticipantsCtl() {
+    return m_meetingService->GetMeetingParticipantsController();
 }
 
 // Stop raw recording of a Zoom meeting

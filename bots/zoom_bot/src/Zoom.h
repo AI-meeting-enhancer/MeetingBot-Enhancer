@@ -113,6 +113,9 @@ public:
     SDKError startRawRecording();
     SDKError stopRawRecording();
 
+    SDKError getUserNames();
+    IMeetingParticipantsController* getParticipantsCtl();
+
     bool isMeetingStart();
 
     static bool hasError(SDKError e, const string& action="");

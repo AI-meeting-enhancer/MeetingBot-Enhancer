@@ -23,7 +23,7 @@ using namespace std;
 class SocketServer : public Singleton<SocketServer> {
     friend class Singleton<SocketServer>;
 
-    const string c_socketPath = "/tmp/zoom_bot/sock/meeting.sock";
+    const string c_socketPath = "./sock/meeting.sock";
     
     const int c_bufferSize = 1024;
 

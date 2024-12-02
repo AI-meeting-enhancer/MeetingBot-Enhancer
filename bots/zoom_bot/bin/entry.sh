@@ -51,7 +51,7 @@ build() {
 }
 
 run() {
-    exec ./"$BUILD"/zoomsdk RawAudio -t
+    exec ./"$BUILD"/zoomsdk RawAudio -t -s
 }
 
 build && run;

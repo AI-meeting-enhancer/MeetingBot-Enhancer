@@ -20,7 +20,7 @@ using namespace ada;
 class Config {
 
     const string& m_version = "1.0.2";
-    const string& m_name = "Zoom Meeting SDK for Linux Sample v" + m_version;
+    const string& m_name = "Zoom bot for AI meeting enhancer v" + m_version;
 
     CLI::App m_app;
 
