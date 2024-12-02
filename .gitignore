@@ -5,6 +5,8 @@ output/*
 bots/zoom_bot/lib/zoomsdk/*
 bots/zoom_bot/build*
 bots/zoom_bot/CMakeFiles
+bots/out/*
+bots/sock/*
 
 # config files
 bots/zoom_bot/config.toml
