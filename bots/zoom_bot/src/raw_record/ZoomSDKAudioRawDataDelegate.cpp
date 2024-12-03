@@ -4,7 +4,7 @@
 #include <vector>
 #include "../Zoom.h"
 
-std::unordered_map<std::string, int> userList; //[{no:0,name:"Bob",node_id:23452}, {no:1, name:"John",node_id:32421}]
+std::unordered_map<std::string, int> userList; //{ node_id:index, 23423432:1, 623143223:2 }
 
 ZoomSDKAudioRawDataDelegate::ZoomSDKAudioRawDataDelegate(bool useMixedAudio = true, bool transcribe = false) : m_useMixedAudio(useMixedAudio), m_transcribe(transcribe)
 {
@@ -70,15 +70,15 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *dat
 
     // Retrieve display name using node_id
     std::string displayName = Zoom::getInstance().getParticipantsCtl()->GetUserByUserID(node_id)->GetUserName();
-    
+
     // Define fixed size for user identification part
     const size_t fixedUserIdSize = sizeof(int) + 50; // 50 bytes for the display name
     std::vector<char> buffer(fixedUserIdSize + bufferLen);
-    
+
     // Convert index to little-endian byte order
     uint32_t index_le = htole32(index); // Use htole32 for little-endian conversion
     memcpy(buffer.data(), &index_le, sizeof(uint32_t));
-    
+
     // Copy display name to the buffer
     strncpy(buffer.data() + sizeof(uint32_t), displayName.c_str(), 50); // Ensure it fits within 50 bytes
     // Fill the remaining bytes with null characters if the display name is shorter than 50 bytes
@@ -117,7 +117,6 @@ void ZoomSDKAudioRawDataDelegate::writeToFile(const string &path, AudioRawData *
     stringstream ss;
     ss << "Writing " << data->GetBufferLen() << "b to " << path << " at " << data->GetSampleRate() << "Hz";
 
-    // Log::info(ss.str());
 }
 
 void ZoomSDKAudioRawDataDelegate::setDir(const string &dir)
