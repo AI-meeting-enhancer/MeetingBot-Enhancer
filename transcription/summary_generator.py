@@ -12,7 +12,7 @@ def generate_meeting_summary():
         transcription_text = file.read()
 
     model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(f"Provide meeting notes and action items for this transcription. Use current timestamp:\n\n{transcription_text}")
+    response = model.generate_content(f"Provide meeting notes and action items for this transcription. Use current timestamp. Please use Zoom meeting summary email template:\n\n{transcription_text}")
     
     if hasattr(response, 'text'):
         print("\nMeeting Summary:\n", response.text)
