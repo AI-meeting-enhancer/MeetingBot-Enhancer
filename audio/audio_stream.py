@@ -1,5 +1,4 @@
 import threading
-import json
 import struct
 from google.cloud import speech
 from .socket_connection import connect_unix_socket
@@ -96,8 +95,6 @@ def process_audio(user_id, audio_queue, display_name):
             if "Audio Timeout Error" in str(e):
                 pass
                 # Continue the loop to wait for new audio data instead of breaking
-
-    print(f"Thread for user ID {user_id} (Display Name: {display_name}) finished.")
 
 def handle_stream(sock):
     for audio_data, user_index, display_name in audio_generator(sock):
