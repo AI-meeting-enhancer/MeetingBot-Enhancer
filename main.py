@@ -13,7 +13,7 @@ stop_transcription = False
 def start_real_time_transcription():
     try:
         stream_audio_to_text()
-        generate_meeting_summary()
+        # generate_meeting_summary()
     except Exception as e:
         print(f"An error occured: {e}")
 
