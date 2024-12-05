@@ -134,3 +134,4 @@ def stream_audio_to_text():
     finally:
         sock.close()
         print("Socket closed.")
+        exit()
