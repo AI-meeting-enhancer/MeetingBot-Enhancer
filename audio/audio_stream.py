@@ -1,6 +1,7 @@
 import threading
 import struct
 from google.cloud import speech
+from google.api_core.exceptions import OutOfRange
 from .socket_connection import connect_unix_socket
 from transcription.transcription_handler import save_transcription_in_real_time
 from config.settings import Config
@@ -30,10 +31,12 @@ def audio_generator(sock):
             # Extract user index
             user_index = struct.unpack('<I', data[:index_size])[0]  # Read first 4 bytes as user index
             
-            # Extract display name
-            display_name_bytes = data[index_size:index_size + display_name_size]
-            display_name = display_name_bytes.split(b'\x00', 1)[0].decode('utf-8')  # Decode and strip nulls
-
+            try:
+                # Extract display name
+                display_name_bytes = data[index_size:index_size + display_name_size]
+                display_name = display_name_bytes.split(b'\x00', 1)[0].decode('utf-8')  # Decode and strip nulls
+            except UnicodeDecodeError as e:
+                return
             # The rest is audio data
             audio_data = data[index_size + display_name_size:]
 
@@ -43,11 +46,10 @@ def audio_generator(sock):
             break
 
 def process_audio(user_id, audio_queue, display_name):
-    rate = 32000
 
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=rate,
+        sample_rate_hertz=Config.SAMPLE_RATE,
         language_code="en-US",
         enable_automatic_punctuation=True
     )
@@ -56,12 +58,7 @@ def process_audio(user_id, audio_queue, display_name):
         try:
             # Create a streaming configuration
             streaming_config = speech.StreamingRecognitionConfig(
-                config=speech.RecognitionConfig(
-                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                    sample_rate_hertz=Config.SAMPLE_RATE,
-                    language_code="en-US",
-                    enable_automatic_punctuation=True,
-                ),
+                config=config,
                 interim_results=True,
             )
 
@@ -90,6 +87,10 @@ def process_audio(user_id, audio_queue, display_name):
                     save_transcription_in_real_time(display_name, speaker_buffer[display_name], Config.OUTPUT_FILE)
                     speaker_buffer[display_name] = ""  # Clear buffer for the next round
 
+        # ignore rate limit
+        except OutOfRange as e:
+            continue
+
         except Exception as e:
             # Handle specific exceptions as needed
             if "Audio Timeout Error" in str(e):
@@ -98,7 +99,6 @@ def process_audio(user_id, audio_queue, display_name):
 
 def handle_stream(sock):
     for audio_data, user_index, display_name in audio_generator(sock):
-        # print(f"Received audio data from user ID: {user_index}, Display Name: {display_name}")
 
         # Check if the user index already exists in user_mapping
         if user_index not in user_mapping:
@@ -131,4 +131,3 @@ def stream_audio_to_text():
     finally:
         sock.close()
         print("Socket closed.")
-        exit()
