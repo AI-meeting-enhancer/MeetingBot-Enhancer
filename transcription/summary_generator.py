@@ -92,6 +92,7 @@ def generate_meeting_summary():
                 file.write(rendered_html)
             # Remove the original transcription file
             os.remove(Config.OUTPUT_FILE)
+            exit()
         else:
             print("Error: No summary generated.")
     except Exception as e:

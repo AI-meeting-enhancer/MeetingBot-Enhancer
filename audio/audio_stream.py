@@ -121,8 +121,6 @@ def handle_stream(sock):
             thread.start()
             audio_queue.put(audio_data)  # Start processing with the first audio chunk
 
-    # After breaking out of the loop, generate the meeting summary
-    generate_meeting_summary()
 
 def stream_audio_to_text():
     sock = connect_unix_socket()
@@ -130,4 +128,7 @@ def stream_audio_to_text():
         handle_stream(sock)
     finally:
         sock.close()
+        
         print("Socket closed.")
+        # After breaking out of the loop, generate the meeting summary
+        generate_meeting_summary()
