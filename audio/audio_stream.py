@@ -36,7 +36,7 @@ def audio_generator(sock):
                 display_name_bytes = data[index_size:index_size + display_name_size]
                 display_name = display_name_bytes.split(b'\x00', 1)[0].decode('utf-8')  # Decode and strip nulls
             except UnicodeDecodeError as e:
-                return
+                continue
             # The rest is audio data
             audio_data = data[index_size + display_name_size:]
 

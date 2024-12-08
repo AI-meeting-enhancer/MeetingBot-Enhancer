@@ -68,7 +68,6 @@ def generate_meeting_summary():
         if hasattr(response, 'text'):
             # Clean the response text
             json_response = extract_content(response.text)
-            print("Raw response from model:", json_response)  # Debugging line
             
             # Check if the response is empty
             if not json_response:
@@ -92,7 +91,7 @@ def generate_meeting_summary():
                 file.write(rendered_html)
             # Remove the original transcription file
             os.remove(Config.OUTPUT_FILE)
-            exit()
+            quit()
         else:
             print("Error: No summary generated.")
     except Exception as e:
