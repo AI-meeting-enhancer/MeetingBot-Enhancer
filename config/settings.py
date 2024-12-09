@@ -5,4 +5,4 @@ class Config:
     SOCKET_PATH = './bots/zoom_bot/sock/meeting.sock'
     OUTPUT_FILE = "./tmp/meeting_temp.txt"
     SUMMARY_TEMPLATE = "./config/summary_template.html"
-    SAMPLE_RATE = 16000
+    SAMPLE_RATE = 32000
