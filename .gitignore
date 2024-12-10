@@ -22,3 +22,6 @@ credentials/*
 
 # vs code config
 .vscode/
+
+# environment file
+.env
