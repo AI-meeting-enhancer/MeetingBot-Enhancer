@@ -50,7 +50,8 @@ You can either provide a Join URL, or a Meeting ID and Password.
 Run the Docker container in order to build and run the bot
 
 ```shell
-docker compose up
+#docker compose up
+docker run -v ./sock/deepgramApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
 
 That's it! You can use the --help argument in [entry.sh](bin/entry.sh) to see the available CLI and config.toml options.

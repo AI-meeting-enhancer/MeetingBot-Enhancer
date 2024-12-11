@@ -36,7 +36,7 @@ Bot run:
 ```
 Enhancer run:
 ```bash
-python3 main.py
+python3 main.py -t g
 ```
 
 

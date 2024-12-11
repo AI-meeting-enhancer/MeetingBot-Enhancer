@@ -1,5 +1,5 @@
 import threading
-import struct
+import struct, time
 from google.cloud import speech
 from google.api_core.exceptions import OutOfRange
 from .socket_connection import connect_unix_socket
@@ -7,12 +7,28 @@ from transcription.transcription_handler import save_transcription_in_real_time
 from config.settings import Config
 from transcription.summary_generator import generate_meeting_summary
 import queue
+from deepgram import (
+    DeepgramClient,
+    LiveTranscriptionEvents,
+    LiveOptions,
+    PrerecordedOptions,
+    DeepgramClientOptions, FileSource
+)
+import asyncio, os, json
+from dotenv import load_dotenv
+import websockets
+
+load_dotenv()
+
+deepgram_api_key = os.getenv('DEEPGRAM_API_KEY')
 
 client = speech.SpeechClient()
 speaker_buffer = {}
 user_threads = {}  # Dictionary to hold threads by user index
 audio_queues = {}  # Dictionary to hold audio queues by user index
 user_mapping = {}  # Map to keep track of user identifiers
+dg_connection = None
+is_finals = []
 
 def audio_generator(sock):
     index_size = 4  # Size for the user index
@@ -45,7 +61,104 @@ def audio_generator(sock):
             print(f"Socket error: {e}")
             break
 
-def process_audio(user_id, audio_queue, display_name):
+def process_audio_deepgram(user_id, audio_queue, display_name):
+    global is_finals
+    silent_audio_interval = 5
+
+    try:
+        deepgram: DeepgramClient = DeepgramClient(deepgram_api_key)
+        dg_connection = deepgram.listen.websocket.v("1")
+
+        def on_open(self, open, **kwargs):
+            pass
+            # print(f"[{display_name}] Connection Open")
+
+        def on_message(self, result, **kwargs):
+            global is_finals
+            try:
+                sentence = result.channel.alternatives[0].transcript
+                if not sentence:
+                    return
+                if result.is_final:
+                    print(f"[{display_name}] : {sentence}")
+                    is_finals.append(sentence)
+                    if result.speech_final:
+                        utterance = " ".join(is_finals)
+                        # print(f"[{display_name}] Speech Final: {utterance}")
+                        save_transcription_in_real_time(display_name, utterance, Config.OUTPUT_FILE)
+                        is_finals = []
+                else:
+                    pass
+                    # print(f"[{display_name}] Interim Results: {sentence}")
+            except Exception as e:
+                print(f"[{display_name}] Error processing message: {e}")
+
+        def on_close(self, close, **kwargs):
+            if is_finals:
+                final_utterance = " ".join(is_finals)
+                save_transcription_in_real_time(display_name, final_utterance, Config.OUTPUT_FILE)
+                is_finals.clear()  # Clear the list after saving
+            # print(f"[{display_name}] Connection Closed")
+
+        dg_connection.on(LiveTranscriptionEvents.Open, on_open)
+        dg_connection.on(LiveTranscriptionEvents.Transcript, on_message)
+        dg_connection.on(LiveTranscriptionEvents.Close, on_close)
+
+        options: LiveOptions = LiveOptions(
+            model="nova-2",
+            language="en-US",
+            smart_format=True,
+            encoding="linear16",
+            channels=1,
+            sample_rate=32000,
+            interim_results=True,
+            utterance_end_ms="1000",
+            vad_events=True,
+            endpointing=400,
+            punctuate=True,
+        )
+
+        if not dg_connection.start(options):
+            print(f"[{display_name}] Failed to connect to Deepgram")
+            return
+        def send_silent_audio():
+            while dg_connection and dg_connection.is_connected:
+                time.sleep(silent_audio_interval)
+                silent_audio = b'\x00' * 32000  # 1 second of silent audio at 32kHz
+                dg_connection.send(silent_audio)
+        # Start a thread to send silent audio periodically
+        silent_audio_thread = threading.Thread(target=send_silent_audio)
+        silent_audio_thread.daemon = True
+        silent_audio_thread.start()
+
+
+        # print(f"[{display_name}] Transcription Started")
+        while dg_connection and dg_connection.is_connected:
+            try:
+                # Fetch audio data
+                audio_data = audio_queue.get(timeout=5)
+                if audio_data:
+                    dg_connection.send(audio_data)
+                else:
+                    # Send silent audio to keep the connection alive
+                    silent_audio = b'\x00' * 32000  # 1 second of silent audio at 32kHz
+                    dg_connection.send(silent_audio)
+            except queue.Empty:
+                # print(f"[{display_name}] Waiting for audio data...")
+                continue
+            except Exception as e:
+                # print(f"[{display_name}] Error: {e}")
+                break
+    except Exception as e:
+        print(f"[{display_name}] Could not open connection: {e}")
+    finally:
+        # Ensure the connection is properly closed
+        if dg_connection and dg_connection.is_connected:
+            dg_connection.finish()
+
+
+
+def process_audio_google(user_id, audio_queue, display_name):
 
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -97,6 +210,7 @@ def process_audio(user_id, audio_queue, display_name):
                 pass
                 # Continue the loop to wait for new audio data instead of breaking
 
+
 def handle_stream(sock):
     for audio_data, user_index, display_name in audio_generator(sock):
 
@@ -114,9 +228,12 @@ def handle_stream(sock):
             audio_queue = queue.Queue()
             audio_queues[user_id] = audio_queue
             
-            print(f"New user detected: {user_id}. Creating a new thread for this user.")
-            
-            thread = threading.Thread(target=process_audio, args=(user_id, audio_queue, display_name))
+            # print(f"New user detected: {user_id}. Creating a new thread for this user.")
+
+            if Config.OUTPUT_FILE.find("google")>=0:
+                thread = threading.Thread(target=process_audio_google, args=(user_id, audio_queue, display_name))
+            else:
+                thread = threading.Thread(target=process_audio_deepgram, args=(user_id, audio_queue, display_name))
             user_threads[user_id] = thread
             thread.start()
             audio_queue.put(audio_data)  # Start processing with the first audio chunk

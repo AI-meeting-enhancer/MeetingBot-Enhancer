@@ -1,5 +1,6 @@
 # output files
 output/*
+tmp/*
 
 # build files & C++ SDK
 bots/zoom_bot/lib/zoomsdk/*

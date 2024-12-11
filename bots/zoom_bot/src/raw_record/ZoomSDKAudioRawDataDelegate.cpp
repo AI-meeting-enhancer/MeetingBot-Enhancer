@@ -61,7 +61,7 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *dat
     // Check if display name contains "Bot"
     // if (displayName.find("Bot") != std::string::npos)
     // {
-    //     Log::info("Skipping audio stream for Bot: " + displayName);
+    //     // Log::info("Skipping audio stream for Bot: " + displayName);
     //     return; // Do not send audio data via socket
     // }
 
