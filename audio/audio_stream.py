@@ -14,9 +14,11 @@ from deepgram import (
     PrerecordedOptions,
     DeepgramClientOptions, FileSource
 )
-import asyncio, os, json
+import os
 from dotenv import load_dotenv
-import websockets
+import noisereduce as nr
+import numpy as np
+import wave
 
 load_dotenv()
 
@@ -98,7 +100,6 @@ def process_audio_deepgram(user_id, audio_queue, display_name):
                 final_utterance = " ".join(is_finals)
                 save_transcription_in_real_time(display_name, final_utterance, Config.OUTPUT_FILE)
                 is_finals.clear()  # Clear the list after saving
-            # print(f"[{display_name}] Connection Closed")
 
         dg_connection.on(LiveTranscriptionEvents.Open, on_open)
         dg_connection.on(LiveTranscriptionEvents.Transcript, on_message)
@@ -131,8 +132,6 @@ def process_audio_deepgram(user_id, audio_queue, display_name):
         silent_audio_thread.daemon = True
         silent_audio_thread.start()
 
-
-        # print(f"[{display_name}] Transcription Started")
         while dg_connection and dg_connection.is_connected:
             try:
                 # Fetch audio data
@@ -144,11 +143,10 @@ def process_audio_deepgram(user_id, audio_queue, display_name):
                     silent_audio = b'\x00' * 32000  # 1 second of silent audio at 32kHz
                     dg_connection.send(silent_audio)
             except queue.Empty:
-                # print(f"[{display_name}] Waiting for audio data...")
                 continue
             except Exception as e:
-                # print(f"[{display_name}] Error: {e}")
                 break
+
     except Exception as e:
         print(f"[{display_name}] Could not open connection: {e}")
     finally:
@@ -199,6 +197,7 @@ def process_audio_google(user_id, audio_queue, display_name):
                     # Save the transcription in real-time using display name
                     save_transcription_in_real_time(display_name, speaker_buffer[display_name], Config.OUTPUT_FILE)
                     speaker_buffer[display_name] = ""  # Clear buffer for the next round
+                    
 
         # ignore rate limit
         except OutOfRange as e:
@@ -210,7 +209,7 @@ def process_audio_google(user_id, audio_queue, display_name):
                 pass
                 # Continue the loop to wait for new audio data instead of breaking
 
-
+    
 def handle_stream(sock):
     for audio_data, user_index, display_name in audio_generator(sock):
 
@@ -228,8 +227,6 @@ def handle_stream(sock):
             audio_queue = queue.Queue()
             audio_queues[user_id] = audio_queue
             
-            # print(f"New user detected: {user_id}. Creating a new thread for this user.")
-
             if Config.OUTPUT_FILE.find("google")>=0:
                 thread = threading.Thread(target=process_audio_google, args=(user_id, audio_queue, display_name))
             else:

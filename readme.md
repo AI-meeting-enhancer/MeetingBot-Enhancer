@@ -28,8 +28,7 @@ This project is innovative solution about AI meeting enhancing by applying bot w
 
 ### 4. Start the server
 Download proper SDK from Zoom marketplace and copy it into ./bots/zoombot/lib/zoomsdk<br>
-Bot run:
-
+Bot run with composer build:
 ```bash
   cd ./bots/zoom_bot/
   docker compose up
@@ -38,9 +37,14 @@ Enhancer run:
 ```bash
 python3 main.py -t g
 ```
-
+Bot Run:
+```bash
+docker run -v ./sock/deepgramApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
+```
+```bash
+docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
+```
 
 ## Support
 
 For support, email yaskivartur0830@gmail.com or join our Slack channel.
-
