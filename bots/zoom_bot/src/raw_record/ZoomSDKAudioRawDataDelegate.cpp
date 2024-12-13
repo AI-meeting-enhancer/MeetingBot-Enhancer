@@ -58,13 +58,6 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *dat
     // Retrieve display name using node_id
     std::string displayName = Zoom::getInstance().getParticipantsCtl()->GetUserByUserID(node_id)->GetUserName();
 
-    // Check if display name contains "Bot"
-    if (displayName.find("Bot") != std::string::npos)
-    {
-        // Log::info("Skipping audio stream for Bot: " + displayName);
-        return; // Do not send audio data via socket
-    }
-
     // Check if the current speaker is a new member
     auto it = userList.find(std::to_string(node_id));
     int index = 0;
