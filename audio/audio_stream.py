@@ -62,12 +62,6 @@ def audio_generator(sock):
             print(f"Socket error: {e}")
             break
 
-def recAndTranscribe(speech, content, displayName):
-    temp_audio_name = f"./audio_{displayName}" + ".pcm"
-    with open(temp_audio_name, 'ab') as file:
-        file.write(content)
-    return speech.StreamingRecognizeRequest(audio_content=content)
-
 
 def process_audio(user_id, audio_queue, display_name):
 
@@ -86,7 +80,7 @@ def process_audio(user_id, audio_queue, display_name):
                 interim_results=True,
             )
 
-            requests = (recAndTranscribe(speech, content, display_name) for content in iter(audio_queue.get, None))
+            requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in iter(audio_queue.get, None))
 
             responses = client.streaming_recognize(config=streaming_config, requests=requests)
 
