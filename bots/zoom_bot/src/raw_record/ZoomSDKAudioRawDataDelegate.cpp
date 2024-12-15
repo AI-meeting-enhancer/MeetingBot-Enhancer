@@ -33,7 +33,7 @@ void ZoomSDKAudioRawDataDelegate::onMixedAudioRawDataReceived(AudioRawData *data
     path << m_dir << "/" << m_filename;
 
     // uncomment the below to enable recording to file
-    // writeToFile(path.str(), data);
+    writeToFile(path.str(), data);
 }
 
 void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *data, uint32_t node_id)
@@ -57,6 +57,7 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *dat
 
     // Retrieve display name using node_id
     std::string displayName = Zoom::getInstance().getParticipantsCtl()->GetUserByUserID(node_id)->GetUserName();
+    // std::string transcription = Zoom::getInstance().getTranscriptionService()->TranscribeAudio(data->GetBuffer(), bufferLen, data->GetSampleRate());
 
     // Check if display name contains "Bot"
     // if (displayName.find("Bot") != std::string::npos)
@@ -88,6 +89,7 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *dat
     uint32_t index_le = htole32(index); // Use htole32 for little-endian conversion
     memcpy(buffer.data(), &index_le, sizeof(uint32_t));
 
+
     // Copy display name to the buffer
     strncpy(buffer.data() + sizeof(uint32_t), displayName.c_str(), 50); // Ensure it fits within 50 bytes
     // Fill the remaining bytes with null characters if the display name is shorter than 50 bytes
@@ -95,6 +97,15 @@ void ZoomSDKAudioRawDataDelegate::onOneWayAudioRawDataReceived(AudioRawData *dat
 
     // Copy the audio data into the buffer
     memcpy(buffer.data() + fixedUserIdSize, data->GetBuffer(), bufferLen); // Copy the audio data
+
+
+    stringstream path_test;        
+    stringstream path;
+    // path << m_dir << "/node-" << displayName << ".pcm";
+    path << m_dir << "/node-" << index << ".pcm";
+    path_test << m_dir << "/node-test" << index << ".pcm";
+    // writeToFile(path.str(), data);
+    // writeToFile_test(path_test.str(), buffer.data(), buffer.size());
 
     // Write to socket
     if (m_transcribe)
@@ -108,6 +119,24 @@ void ZoomSDKAudioRawDataDelegate::onShareAudioRawDataReceived(AudioRawData *data
     stringstream ss;
     ss << "Shared Audio Raw data: " << data->GetBufferLen() / 10 << "k at " << data->GetSampleRate() << "Hz";
     Log::info(ss.str());
+}
+
+void ZoomSDKAudioRawDataDelegate::writeToFile_test(const string &path, const char* buf, int len)
+{
+    static std::ofstream file;
+    file.open(path, std::ios::out | std::ios::binary | std::ios::app);
+
+    if (!file.is_open())
+        return Log::error("failed to open audio file path: " + path);
+
+    file.write(buf + 54, len - 54);
+
+    file.close();
+    file.flush();
+
+    stringstream ss;
+    // ss << "Writing " << data->GetBufferLen() << "b to " << path << " at " << data->GetSampleRate() << "Hz";
+
 }
 
 void ZoomSDKAudioRawDataDelegate::writeToFile(const string &path, AudioRawData *data)
@@ -125,6 +154,7 @@ void ZoomSDKAudioRawDataDelegate::writeToFile(const string &path, AudioRawData *
 
     stringstream ss;
     ss << "Writing " << data->GetBufferLen() << "b to " << path << " at " << data->GetSampleRate() << "Hz";
+    // Log::info(ss.str());
 
 }
 

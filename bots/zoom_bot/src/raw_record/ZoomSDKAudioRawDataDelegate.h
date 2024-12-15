@@ -28,6 +28,7 @@ class ZoomSDKAudioRawDataDelegate : public IZoomSDKAudioRawDataDelegate {
     bool m_transcribe;
 
     void writeToFile(const string& path, AudioRawData* data);
+    void writeToFile_test(const string &path, const char* buf, int len);
 public:
 
     ZoomSDKAudioRawDataDelegate(bool useMixedAudio, bool transcribe);

@@ -90,7 +90,12 @@ bool SocketServer::isReady() {
 // Write a buffer of data to the socket
 int SocketServer::writeBuf(const char* buf, int len) {
     if (m_dataSocket > 0) {
-        auto ret = write(m_dataSocket, buf, len);
+        // Get the length of the message
+        uint32_t length = htole32(len);
+        // Send the length first
+        write(m_dataSocket, &length, sizeof(uint32_t));
+        // Send the acutual messsage
+        write(m_dataSocket, buf, len);
         // Uncomment the following lines for error handling
         /*
         if (ret == -1) {

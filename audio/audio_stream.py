@@ -1,6 +1,6 @@
 import threading
 import struct
-from google.cloud import speech
+from google.cloud import speech_v1p1beta1 as speech
 from google.api_core.exceptions import OutOfRange
 from .socket_connection import connect_unix_socket
 from transcription.transcription_handler import save_transcription_in_real_time
@@ -21,8 +21,24 @@ def audio_generator(sock):
 
     while True:
         try:
-            data = sock.recv(buffer_size)
+            # Read the length of the incoming message (4 bytes)
+            length_bytes = sock.recv(4)
+            if not length_bytes:
+                break  # Connection closed
+
+            # Unpack the length (network byte order to host byte order)
+            message_length = struct.unpack('<I', length_bytes)[0]  # '!I' means big-endian unsigned int
+
+            # Read the actual message based on the lengt
+            data = sock.recv(message_length)
+            if len(data) < 1000:
+                print(f"Data received from socket {len(data)} bytes ({message_length})       ", end='\r')
+            else:
+                print()
+                print(f"Data received from socket {len(data)} bytes ({message_length})")
+
             if not data:
+                print(f"Error : No data received from socket")
                 break
             if len(data) < index_size + display_name_size:
                 print("Received data is too short to contain user ID and display name.")
@@ -36,6 +52,7 @@ def audio_generator(sock):
                 display_name_bytes = data[index_size:index_size + display_name_size]
                 display_name = display_name_bytes.split(b'\x00', 1)[0].decode('utf-8')  # Decode and strip nulls
             except UnicodeDecodeError as e:
+                print(f"Error decoding display name {len(data)}: {e}")
                 continue
             # The rest is audio data
             audio_data = data[index_size + display_name_size:]
@@ -44,6 +61,13 @@ def audio_generator(sock):
         except Exception as e:
             print(f"Socket error: {e}")
             break
+
+def recAndTranscribe(speech, content, displayName):
+    temp_audio_name = f"./audio_{displayName}" + ".pcm"
+    with open(temp_audio_name, 'ab') as file:
+        file.write(content)
+    return speech.StreamingRecognizeRequest(audio_content=content)
+
 
 def process_audio(user_id, audio_queue, display_name):
 
@@ -62,7 +86,7 @@ def process_audio(user_id, audio_queue, display_name):
                 interim_results=True,
             )
 
-            requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in iter(audio_queue.get, None))
+            requests = (recAndTranscribe(speech, content, display_name) for content in iter(audio_queue.get, None))
 
             responses = client.streaming_recognize(config=streaming_config, requests=requests)
 
@@ -89,6 +113,7 @@ def process_audio(user_id, audio_queue, display_name):
 
         # ignore rate limit
         except OutOfRange as e:
+            print(f"Rate limit exceeded: {e}")
             continue
 
         except Exception as e:
@@ -98,28 +123,31 @@ def process_audio(user_id, audio_queue, display_name):
                 # Continue the loop to wait for new audio data instead of breaking
 
 def handle_stream(sock):
-    for audio_data, user_index, display_name in audio_generator(sock):
+    try:
+        for audio_data, user_index, display_name in audio_generator(sock):
 
-        # Check if the user index already exists in user_mapping
-        if user_index not in user_mapping:
-            user_mapping[user_index] = len(user_mapping)  # Use the current size as the new user ID
+            # Check if the user index already exists in user_mapping
+            if user_index not in user_mapping:
+                user_mapping[user_index] = len(user_mapping)  # Use the current size as the new user ID
 
-        user_id = user_mapping[user_index]
+            user_id = user_mapping[user_index]
 
-        if user_id in user_threads:
-            # If thread exists, put audio data in the existing queue
-            audio_queues[user_id].put(audio_data)
-        else:
-            # Create a new queue and thread for the user
-            audio_queue = queue.Queue()
-            audio_queues[user_id] = audio_queue
-            
-            print(f"New user detected: {user_id}. Creating a new thread for this user.")
-            
-            thread = threading.Thread(target=process_audio, args=(user_id, audio_queue, display_name))
-            user_threads[user_id] = thread
-            thread.start()
-            audio_queue.put(audio_data)  # Start processing with the first audio chunk
+            if user_id in user_threads:
+                # If thread exists, put audio data in the existing queue
+                audio_queues[user_id].put(audio_data)
+            else:
+                # Create a new queue and thread for the user
+                audio_queue = queue.Queue()
+                audio_queues[user_id] = audio_queue
+                
+                # print(f"New user detected: {user_id}. Creating a new thread for this user.")
+                
+                thread = threading.Thread(target=process_audio, args=(user_id, audio_queue, display_name))
+                user_threads[user_id] = thread
+                thread.start()
+                audio_queue.put(audio_data)  # Start processing with the first audio chunk
+    except Exception as e:
+        print(f"Error handling stream: {e}")
 
 
 def stream_audio_to_text():
