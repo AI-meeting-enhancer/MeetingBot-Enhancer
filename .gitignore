@@ -1,13 +1,16 @@
 # output files
 output/*
 tmp/*
+venv
 
 # build files & C++ SDK
 bots/zoom_bot/lib/zoomsdk/*
 bots/zoom_bot/build*
 bots/zoom_bot/CMakeFiles
-bots/out/*
-bots/sock/*
+bots/zoom_bot/out/*
+bots/zoom_bot/sock/*
+bots/zoom_bot/vcpkg
+bots/zoom_bot/core.*
 
 # config files
 bots/zoom_bot/config.toml
@@ -26,3 +29,4 @@ credentials/*
 
 # environment file
 .env
+bots/zoom_bot/core.7

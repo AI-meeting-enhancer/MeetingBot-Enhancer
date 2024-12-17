@@ -11,20 +11,22 @@ from deepgram import (
     DeepgramClient,
     LiveTranscriptionEvents,
     LiveOptions,
-    PrerecordedOptions,
-    DeepgramClientOptions, FileSource
 )
-import os
+import os, sys, math
 from dotenv import load_dotenv
-import noisereduce as nr
-import numpy as np
-import wave
+from itertools import chain, tee
+
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[0;33m"
+WHITE = "\033[0;37m"
+
+last_content_length = 0
 
 load_dotenv()
 
 deepgram_api_key = os.getenv('DEEPGRAM_API_KEY')
 
-client = speech.SpeechClient()
 speaker_buffer = {}
 user_threads = {}  # Dictionary to hold threads by user index
 audio_queues = {}  # Dictionary to hold audio queues by user index
@@ -35,12 +37,22 @@ is_finals = []
 def audio_generator(sock):
     index_size = 4  # Size for the user index
     display_name_size = 50  # Size for the display name
-    buffer_size = 4096
 
     while True:
         try:
-            data = sock.recv(buffer_size)
+            # Read the length of the incoming message (4 bytes)
+            length_bytes = sock.recv(4)
+            if not length_bytes:
+                break  # Connection closed
+
+            # Unpack the length (network byte order to host byte order)
+            message_length = struct.unpack('<I', length_bytes)[0]  # '!I' means big-endian unsigned int
+
+            # Read the actual message based on the lengt
+            data = sock.recv(message_length)
+
             if not data:
+                print(f"Error : No data received from socket")
                 break
             if len(data) < index_size + display_name_size:
                 print("Received data is too short to contain user ID and display name.")
@@ -54,6 +66,7 @@ def audio_generator(sock):
                 display_name_bytes = data[index_size:index_size + display_name_size]
                 display_name = display_name_bytes.split(b'\x00', 1)[0].decode('utf-8')  # Decode and strip nulls
             except UnicodeDecodeError as e:
+                print(f"Error decoding display name {len(data)}: {e}")
                 continue
             # The rest is audio data
             audio_data = data[index_size + display_name_size:]
@@ -73,7 +86,6 @@ def process_audio_deepgram(user_id, audio_queue, display_name):
 
         def on_open(self, open, **kwargs):
             pass
-            # print(f"[{display_name}] Connection Open")
 
         def on_message(self, result, **kwargs):
             global is_finals
@@ -82,14 +94,17 @@ def process_audio_deepgram(user_id, audio_queue, display_name):
                 if not sentence:
                     return
                 if result.is_final:
-                    print(f"[{display_name}] : {sentence}")
+                    # print(f"[{display_name}] : {sentence}")
                     is_finals.append(sentence)
                     if result.speech_final:
                         utterance = " ".join(is_finals)
+                        update_terminal_print(f"{display_name} : {utterance}\n", GREEN)
                         # print(f"[{display_name}] Speech Final: {utterance}")
                         save_transcription_in_real_time(display_name, utterance, Config.OUTPUT_FILE)
                         is_finals = []
                 else:
+                    utterance = " ".join(is_finals)
+                    update_terminal_print(f"{display_name} : {utterance} {sentence}\r", RED)
                     pass
                     # print(f"[{display_name}] Interim Results: {sentence}")
             except Exception as e:
@@ -154,29 +169,51 @@ def process_audio_deepgram(user_id, audio_queue, display_name):
         if dg_connection and dg_connection.is_connected:
             dg_connection.finish()
 
+def update_terminal_print(content: str, colorCode: str = WHITE) -> None:
+    global last_content_length
 
+    # get the terminal size
+    terminal_size = os.get_terminal_size()
+    line_length = terminal_size.columns
+    num_lines = math.ceil(last_content_length / line_length)
+    for i in range(num_lines):
+        if i != 0:
+            sys.stdout.write("\033[F")  # Move cursor up one line
+        sys.stdout.write("\033[K")  # Clear the line
+    
+    sys.stdout.write(colorCode)
+    sys.stdout.write(content)
+    
+    if content[-1] == "\r":
+        last_content_length = len(content) - 1
+    elif content[-1] == "\n":
+        last_content_length = 0
+
+    sys.stdout.write(WHITE)
+    pass
 
 def process_audio_google(user_id, audio_queue, display_name):
-
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=Config.SAMPLE_RATE,
         language_code="en-US",
         enable_automatic_punctuation=True
     )
-
+    startTime = time.time()
+    client = speech.SpeechClient()
     while True:  # Keep the process running to handle reconnections
-        try:
+        try:                  
             # Create a streaming configuration
             streaming_config = speech.StreamingRecognitionConfig(
                 config=config,
                 interim_results=True,
             )
-
-            requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in iter(audio_queue.get, None))
-
+            pre_audio = None
+            audio = iter(audio_queue.get, None)
+            if pre_audio:
+                audio = chain(pre_audio, audio)
+            requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in audio)
             responses = client.streaming_recognize(config=streaming_config, requests=requests)
-
             for response in responses:
                 if not response.results:
                     continue
@@ -196,20 +233,42 @@ def process_audio_google(user_id, audio_queue, display_name):
 
                     # Save the transcription in real-time using display name
                     save_transcription_in_real_time(display_name, speaker_buffer[display_name], Config.OUTPUT_FILE)
+                    update_terminal_print(f"{display_name} : {transcript}\n", GREEN)
                     speaker_buffer[display_name] = ""  # Clear buffer for the next round
+                else:
+                    update_terminal_print(f"{display_name} : {transcript}\r", RED)
+                
+                if time.time() - startTime > 100:
+                    pre_audio = tee(audio)
+                    print(f"--------- Current Queue Size: {audio_queue.qsize()} ----------")
+                    startTime = time.time()
+                    print("Reconnecting Google Cloud Speech ...")
                     
+                    # -------- Output temp result as final in case of timeout
+                    # Use display_name instead of user_id
+                    if display_name not in speaker_buffer:
+                        speaker_buffer[display_name] = ""
+                    speaker_buffer[display_name] += f" {transcript}"
 
+                    # Save the transcription in real-time using display name
+                    save_transcription_in_real_time(display_name, speaker_buffer[display_name], Config.OUTPUT_FILE)
+                    update_terminal_print(f"{display_name} : {transcript}\n", GREEN)
+                    speaker_buffer[display_name] = ""  # Clear buffer for the next round
+                    break
+            pre_audio = None
+            
         # ignore rate limit
         except OutOfRange as e:
+            print(f"[Rate limit exceeded]:{e}")
             continue
 
-        except Exception as e:
-            # Handle specific exceptions as needed
-            if "Audio Timeout Error" in str(e):
-                pass
-                # Continue the loop to wait for new audio data instead of breaking
+        # except Exception as e:
+        #     print(f"Exception:{e}")
+        #     # Handle specific exceptions as needed
+        #     if "Audio Timeout Error" in str(e):
+        #         pass
+        #         # Continue the loop to wait for new audio data instead of breaking
 
-    
 def handle_stream(sock):
     for audio_data, user_index, display_name in audio_generator(sock):
 
