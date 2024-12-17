@@ -233,18 +233,16 @@ def process_audio_google(user_id, audio_queue, display_name):
 
                     # Save the transcription in real-time using display name
                     save_transcription_in_real_time(display_name, speaker_buffer[display_name], Config.OUTPUT_FILE)
-                    update_terminal_print(f"{display_name} : {transcript}\n", GREEN)
+                    if (transcript.strip()):
+                        update_terminal_print(f"{display_name} : {transcript}\n", GREEN)
                     speaker_buffer[display_name] = ""  # Clear buffer for the next round
                 else:
                     update_terminal_print(f"{display_name} : {transcript}\r", RED)
                 
                 if time.time() - startTime > 100:
                     pre_audio = tee(audio)
-                    # print(f"--------- Current Queue Size: {audio_queue.qsize()} ----------")
                     startTime = time.time()
-                    # print("Reconnecting Google Cloud Speech ...")
                     
-                    # -------- Output temp result as final in case of timeout
                     # Use display_name instead of user_id
                     if display_name not in speaker_buffer:
                         speaker_buffer[display_name] = ""
@@ -252,22 +250,15 @@ def process_audio_google(user_id, audio_queue, display_name):
 
                     # Save the transcription in real-time using display name
                     save_transcription_in_real_time(display_name, speaker_buffer[display_name], Config.OUTPUT_FILE)
-                    update_terminal_print(f"{display_name} : {transcript}\n", GREEN)
+                    if (transcript.strip()):
+                        update_terminal_print(f"{display_name} : {transcript}\n", GREEN)
                     speaker_buffer[display_name] = ""  # Clear buffer for the next round
                     break
             pre_audio = None
             
-        # ignore rate limit
+        # Ignore limit time of silent
         except OutOfRange as e:
-            print(f"[Rate limit exceeded]:{e}")
             continue
-
-        # except Exception as e:
-        #     print(f"Exception:{e}")
-        #     # Handle specific exceptions as needed
-        #     if "Audio Timeout Error" in str(e):
-        #         pass
-        #         # Continue the loop to wait for new audio data instead of breaking
 
 def handle_stream(sock):
     for audio_data, user_index, display_name in audio_generator(sock):
