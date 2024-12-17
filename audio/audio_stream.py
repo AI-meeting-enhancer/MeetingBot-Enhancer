@@ -240,9 +240,9 @@ def process_audio_google(user_id, audio_queue, display_name):
                 
                 if time.time() - startTime > 100:
                     pre_audio = tee(audio)
-                    print(f"--------- Current Queue Size: {audio_queue.qsize()} ----------")
+                    # print(f"--------- Current Queue Size: {audio_queue.qsize()} ----------")
                     startTime = time.time()
-                    print("Reconnecting Google Cloud Speech ...")
+                    # print("Reconnecting Google Cloud Speech ...")
                     
                     # -------- Output temp result as final in case of timeout
                     # Use display_name instead of user_id
