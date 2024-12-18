@@ -9,12 +9,13 @@ This project is innovative solution about AI meeting enhancing by applying bot w
 ## Run Locally [ Ubuntu only temperally ]
 
 ### Preparation
-1. [Docker](https://www.docker.com/)
+1. [Docker environment Installation](https://www.docker.com/)
 1. [Zoom Account](https://support.zoom.us/hc/en-us/articles/207278726-Plan-Types-)
-1. [Zoom Meeting SDK Credentials](#config:-sdk-credentials) (Instructions below)
+1. [Zoom Meeting SDK Credentials](https://marketplace.zoom.us/) in "./bots/zoom_bot/config.toml" file
     1. Client ID
     1. Client Secret
 1. Install [Python](https://www.python.org/downloads/)
+1. [Google STT API](https://console.cloud.google.com/)'s JSON credential file in "/credentials" directory
 
 ### 1. Clone the project
 
@@ -45,11 +46,10 @@ Install necessary modules
 
 ### 4. Start the server
 Download proper SDK from Zoom marketplace and copy it into ./bots/zoombot/lib/zoomsdk<br>
-Bot run with composer build:
 ```bash
   cd ./bots/zoom_bot/
 ```
-Bot Run with Google STT API:
+Bot Run with Google STT API for speech recognition:
 ```bash
 docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
