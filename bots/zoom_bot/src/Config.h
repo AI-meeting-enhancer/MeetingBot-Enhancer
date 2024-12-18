@@ -27,6 +27,8 @@ class Config {
     CLI::App* m_rawRecordAudioCmd;
     string m_audioDir="out";
     string m_audioFile;
+    string m_sockDir="sock";
+    string m_sockFile="meeting.sock";
     bool m_separateParticipantAudio;
     bool m_transcribe;
 
@@ -79,9 +81,11 @@ public:
     bool transcribe() const;
 
     const string& audioFile() const;
+    const string& socketFile() const;
     const string& videoFile() const;
 
     const string& audioDir() const;
+    const string& socketDir() const;
     const string& videoDir() const;
 
     bool separateParticipantAudio() const;

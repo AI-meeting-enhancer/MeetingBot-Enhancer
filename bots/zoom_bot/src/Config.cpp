@@ -30,6 +30,8 @@ Config::Config() :
     // Add options for raw audio recording parameters
     m_rawRecordAudioCmd->add_option("-f, --file", m_audioFile, "Output PCM audio file")->required(); // Output audio file (required)
     m_rawRecordAudioCmd->add_option("-d, --dir", m_audioDir, "Audio Output Directory"); // Output directory for audio
+    m_rawRecordAudioCmd->add_option("--sock-file", m_sockFile, "Unix Socket File name"); // Output audio file (required)
+    m_rawRecordAudioCmd->add_option("--sock-dir", m_sockDir, "Unix Socket Directory"); // Output directory for audio
     m_rawRecordAudioCmd->add_flag("-s, --separate-participants", m_separateParticipantAudio, "Output to separate PCM files for each participant"); // Flag to separate audio files
     m_rawRecordAudioCmd->add_flag("-t, --transcribe", m_transcribe, "Transcribe audio to text"); // Flag to enable transcription
 
@@ -138,6 +140,16 @@ const string& Config::audioDir() const {
 // Getter for the audio output file
 const string& Config::audioFile() const {
     return m_audioFile; // Return the audio output file
+}
+
+// Getter for the socket output directory
+const string& Config::socketDir() const {
+    return m_sockDir; // Return the audio output directory
+}
+
+// Getter for the socket output file
+const string& Config::socketFile() const {
+    return m_sockFile; // Return the audio output file
 }
 
 // Getter for the video output directory

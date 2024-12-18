@@ -3,22 +3,13 @@
 This sample demonstrates how you can run the Zoom Meeting SDK for Linux within a Docker container and configure it for a
 variety of use cases through an intuitive CLI or through a configuration file.
 
-## Prerequisites
+## 1. Prerequisites
 
 1. [Docker](https://www.docker.com/)
 1. [Zoom Account](https://support.zoom.us/hc/en-us/articles/207278726-Plan-Types-)
 1. [Zoom Meeting SDK Credentials](#config:-sdk-credentials) (Instructions below)
     1. Client ID
     1. Client Secret
-1. [AssemblyAI Key](https://www.assemblyai.com/)
-1. [Anthropic Key](https://www.anthropic.com/)
-
-## 1. Clone the Repository
-
-```bash
-# Clone down this repository
-git clone git@github.com:zoom/meetingsdk-headless-linux-sample.git
-```
 
 ## 2. Download the Zoom Linux SDK
 
@@ -50,9 +41,13 @@ You can either provide a Join URL, or a Meeting ID and Password.
 Run the Docker container in order to build and run the bot
 
 ```shell
-#docker compose up
-docker run -v ./sock/deepgramApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
+# Run the docker image
 docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
+```
+Or if you want to use Deepgram API for speech recognition
+```shell
+# Run the docker image
+docker run -v ./sock/deepgramApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
 
 That's it! You can use the --help argument in [entry.sh](bin/entry.sh) to see the available CLI and config.toml options.

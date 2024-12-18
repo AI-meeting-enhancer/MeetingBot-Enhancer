@@ -8,6 +8,14 @@ This project is innovative solution about AI meeting enhancing by applying bot w
 - [@AI-meeting-enhancer](https://www.github.com/AI-meeting-enhancer)
 ## Run Locally [ Ubuntu only temperally ]
 
+### Preparation
+1. [Docker](https://www.docker.com/)
+1. [Zoom Account](https://support.zoom.us/hc/en-us/articles/207278726-Plan-Types-)
+1. [Zoom Meeting SDK Credentials](#config:-sdk-credentials) (Instructions below)
+    1. Client ID
+    1. Client Secret
+1. Install [Python](https://www.python.org/downloads/)
+
 ### 1. Clone the project
 
 ```bash
@@ -22,6 +30,15 @@ This project is innovative solution about AI meeting enhancing by applying bot w
 
 ### 3. Install dependencies
 
+Install and activate virtual environment
+```bash
+  python -m venv venv
+```
+```bash
+   source venv/bin/activate
+```
+
+Install necessary modules
 ```bash
   pip install -r requirements.txt
 ```
@@ -31,18 +48,19 @@ Download proper SDK from Zoom marketplace and copy it into ./bots/zoombot/lib/zo
 Bot run with composer build:
 ```bash
   cd ./bots/zoom_bot/
-  docker compose up
 ```
-Enhancer run:
+Bot Run with Google STT API:
 ```bash
-python3 main.py -t g
+docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
-Bot Run:
+Or Run with Deepgram API:
 ```bash
 docker run -v ./sock/deepgramApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
+
+Enhancer run:
 ```bash
-docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
+python3 main.py -t g
 ```
 
 ## Support
