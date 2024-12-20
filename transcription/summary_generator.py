@@ -29,36 +29,16 @@ def generate_meeting_summary():
         # Read the HTML template for the summary
         with open(Config.SUMMARY_TEMPLATE) as template_file:
             html_template = template_file.read()
+            
+        # Read the JSON template for retrieving from Gemini
+        with open(Config.RETURN_JSON_TEMPLATE) as json_template:
+            json_template = json_template.read()
 
         # Initialize the generative AI model
         model = genai.GenerativeModel("gemini-1.5-pro")
         # Create a prompt for the AI model to summarize the meeting
         prompt = (
-            """You are an AI meeting assistant. Summarize the following transcription using this JSON structure:\n
-            {
-                "meeting_name": 'Yaskiv',
-                "meeting_date":'(""" + meeting_date + """)',
-                "recap": "<Brief meeting summary>",
-                "actions": [
-                    "<Action 1>",
-                    "<Action 2>",
-                    "<Action 3>"
-                ],
-                "summary_items": [
-                    {
-                    "title": "<Section Title 1>",
-                    "content": "<Section Content 1>"
-                    },
-                    {
-                    "title": "<Section Title 2>",
-                    "content": "<Section Content 2>"
-                    },
-                    {
-                    "title": "<Section Title 3>",
-                    "content": "<Section Content 3>"
-                    }
-                ]
-            }""" + f"\nMeeting Transcription: {transcription_text}"
+            "You are an AI meeting assistant. Summarize the following transcription using this JSON structure:\n" + json_template + f"\nMeeting Transcription: {transcription_text}"
         )
         
         # Generate content using the AI model
@@ -77,6 +57,8 @@ def generate_meeting_summary():
             # Attempt to parse the JSON response
             try:
                 data = json.loads(json_response)
+                data.update(json.loads('{"meeting_name":"'+Config.MEETING_NAME+'", "meeting_date":"'+meeting_date+'"}'))
+                
             except json.JSONDecodeError as e:
                 print("Error: Response is not valid JSON.", e)
                 return
