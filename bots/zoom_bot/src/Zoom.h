@@ -42,8 +42,6 @@ class Zoom : public Singleton<Zoom> {
 
     friend class Singleton<Zoom>;
 
-    Config m_config;
-
     string m_jwt;
 
     time_point m_iat;
@@ -98,7 +96,8 @@ class Zoom : public Singleton<Zoom> {
         }
     };
 
-public:
+public:    
+    Config m_config;
     Zoom() {};
     SDKError init();
     SDKError auth();

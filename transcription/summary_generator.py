@@ -34,7 +34,7 @@ def generate_meeting_summary():
         model = genai.GenerativeModel("gemini-1.5-pro")
         # Create a prompt for the AI model to summarize the meeting
         prompt = (
-            """You are an AI meeting assistant. Summarize the following transcription using this JSON structure:\n
+            """You are an AI meeting assistant. Summarize the following transcription using this JSON structure. Please provide a to-do list for each attendee for the "actions" item:\n
             {
                 "meeting_name": 'Yaskiv',
                 "meeting_date":'(""" + meeting_date + """)',

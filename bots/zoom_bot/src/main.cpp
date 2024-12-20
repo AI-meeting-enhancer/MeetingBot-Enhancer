@@ -16,6 +16,14 @@ void onExit() {
 }
 
 /**
+ *  Callback fired at meeting end event()
+ */
+void onMeetingEnd() {
+    onExit();
+    _Exit(SIGTERM);
+}
+
+/**
  * Callback fired when a signal is trapped
  * @param signal type of signal
  */

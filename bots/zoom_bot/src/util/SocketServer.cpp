@@ -1,8 +1,14 @@
 #include "SocketServer.h"
+#include "../Zoom.h"
 
 // Constructor: Initialize the mutex for thread safety
 SocketServer::SocketServer() {
     pthread_mutex_init(&m_mutex, NULL);
+
+    // Retrieve Socket Path from config
+    std::string sock_dir = Zoom::getInstance().m_config.socketDir();
+    std::string sock_file = Zoom::getInstance().m_config.socketFile();
+    c_socketPath = "./" + sock_dir + "/" + sock_file;
 }
 
 // Destructor: Cleanup resources when the object is destroyed
