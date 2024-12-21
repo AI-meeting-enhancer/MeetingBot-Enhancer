@@ -22,7 +22,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple command line argument parser.")
     parser.add_argument('-t', '--translatorApi', type=str, required=True, help="API abbriviation for transcription among 'g':Google stt api, 'd':Deepgram api.")
     parser.add_argument('-m', '--modification', type=bool, help="if you set this argument, this script will work for only modification")
-
+    parser.add_argument('-n', '--meetingName', type=str, required=True, help="Name of meeting for attend into meeting with")
+    
     args = parser.parse_args()
     
     if args.translatorApi == 'g':
@@ -31,6 +32,8 @@ if __name__ == "__main__":
     else:
         Config.SOCKET_PATH = './bots/zoom_bot/sock/deepgramApi/meeting.sock'
         Config.OUTPUT_FILE = './tmp/meeting_temp_deepgram.txt'
+        
+    Config.MEETING_NAME = args.meetingName
 
     if args.modification:
         modify_transcription()
