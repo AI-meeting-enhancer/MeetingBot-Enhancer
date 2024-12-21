@@ -1,0 +1,5 @@
+google-cloud-speech
+google-generativeai
+jinja2
+deepgram-sdk
+python-dotenv
