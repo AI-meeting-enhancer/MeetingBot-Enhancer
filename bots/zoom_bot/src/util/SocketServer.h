@@ -24,7 +24,7 @@ class SocketServer : public Singleton<SocketServer> {
     friend class Singleton<SocketServer>;
 
     // const string c_socketPath = "./sock/meeting.sock";
-    const string c_socketPath = "./sock/meeting.sock";
+    std::string c_socketPath = "./sock/meeting.sock";
     
     const int c_bufferSize = 1024;
 
