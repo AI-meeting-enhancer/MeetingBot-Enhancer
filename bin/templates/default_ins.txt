@@ -1,0 +1,1 @@
+You are an AI meeting assistant. Summarize the following transcription using this JSON structure
