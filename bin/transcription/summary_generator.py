@@ -39,6 +39,7 @@ def generate_meeting_summary():
     with open(Config.INSTRUCTION_FOR_SUMMARY) as instruction_file:
         instruction = instruction_file.read()
 
+    print("Generating Summary...")
     # Initialize the generative AI model
     model = genai.GenerativeModel("gemini-1.5-pro")
     # Create a prompt for the AI model to summarize the meeting
@@ -73,12 +74,14 @@ def generate_meeting_summary():
         rendered_html = template.render(data)
 
         # Save the rendered HTML to a file with a timestamp
-        output_file_path = f"./output/Meeting_Note_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.html"
+        summary_file_name=f"Meeting_Note_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.html"
+        output_file_path = f"./output/{summary_file_name}"
         with open(output_file_path, "w+") as file:
             file.write(rendered_html)
         # Remove the original transcription file
-        os.remove(Config.OUTPUT_FILE)
-        quit()
+        os.remove(Config.OUTPUT_FILE) 
+        print(f"Summary has generated successfully on '{summary_file_name}'.")
+        os._exit(0)
     else:
         print("Error: No summary generated.")
     # except Exception as e:

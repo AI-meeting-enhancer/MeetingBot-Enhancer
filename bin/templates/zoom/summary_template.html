@@ -58,6 +58,7 @@
                                                                 </td>
                                                             </tr>
                                                             <tr style="height:6px"></tr>
+                                                            {% if todo_list|length > 0 %}
                                                             {% for user in todo_list %}
                                                             {# Addition #}
                                                             {% set userIndex = loop.index %}
@@ -76,6 +77,14 @@
                                                             </tr>
                                                             {% endfor %}
                                                             {% endfor %}
+                                                            {% else %}
+                                                            <tr>
+                                                                <td colspan="2"
+                                                                    style="font-size:16px;color:#39394d;font-family:Arial,Helvetica,sans-serif;vertical-align:top;line-height:20px;padding:0 32px">
+                                                                    No action items were detected during the meeting.
+                                                                </td>
+                                                            </tr>
+                                                            {% endif %}
 
                                                             <tr style="height:32px"></tr>
                                                             <tr>

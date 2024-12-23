@@ -27,6 +27,7 @@ void MeetingServiceEvent::onMeetingStatusChanged(MeetingStatus status, int iResu
         case MEETING_STATUS_ENDED:
             Log::success("meeting ended");
             if (m_onMeetingEnd) m_onMeetingEnd();
+            exit(0);
             return;
         case MEETING_STATUS_FAILED:
             Log::error("failed to connect to the meeting with MeetingFailCode " + result);

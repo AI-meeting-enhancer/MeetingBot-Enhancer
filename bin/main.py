@@ -1,15 +1,11 @@
-import threading, os
 from config.settings import Config
-import argparse
+import os, argparse, subprocess, time
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = Config.GOOGLE_APPLICATION_CREDENTIALS
 
 from audio.audio_stream import stream_audio_to_text
 from transcription.modify_transcription import modify_transcription
 
-
-# Flag to control the transcription thread
-stop_transcription = False
 
 def start_real_time_transcription():
     try:
@@ -39,12 +35,33 @@ if __name__ == "__main__":
         modify_transcription()
         exit(0)
 
-    transcription_thread = threading.Thread(target=start_real_time_transcription)
-    transcription_thread.start()
 
+    # Delete the output file before run the Bot
     try:
-        transcription_thread.join()
-    except KeyboardInterrupt:
-        print("\nTerminating transcription...")
-        stop_transcription = True
-        transcription_thread.join()
+        if os.path.exists(Config.SOCKET_PATH):
+            os.remove(Config.SOCKET_PATH)
+    except Exception as e:
+        print(f"Error deleting file: {e}")
+
+
+    os.chdir("bots/zoom_bot")
+    # Prepare the command as a list
+    command = [
+        "./build_app/zoomsdk",  # Ensure this is the correct executable path
+        "RawAudio", "-t", "-s", "--sock-dir", "sock/googleApi", "--sock-file", "meeting.sock"
+    ]
+
+    # Start the C++ application
+    bot_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    # Wait until Bot is ready
+    os.chdir("../../")
+    while True:
+        if os.path.exists(Config.SOCKET_PATH):
+            print("Bot is started successfully.\n")
+            break
+        time.sleep(1)
+
+    # Now that the zoomsdk has completed and the socket file is ready, start transcription
+    start_real_time_transcription()
+    

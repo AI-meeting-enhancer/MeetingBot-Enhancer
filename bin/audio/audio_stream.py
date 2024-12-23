@@ -12,7 +12,8 @@ from deepgram import (
     LiveTranscriptionEvents,
     LiveOptions,
 )
-import os, sys, math
+import os, sys, math, json
+from pprint import pprint
 from dotenv import load_dotenv
 from itertools import chain, tee
 
@@ -197,7 +198,8 @@ def process_audio_google(user_id, audio_queue, display_name):
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=Config.SAMPLE_RATE,
         language_code="en-US",
-        enable_automatic_punctuation=True
+        enable_automatic_punctuation=True,
+        enable_word_time_offsets = True
     )
     startTime = time.time()
     client = speech.SpeechClient()

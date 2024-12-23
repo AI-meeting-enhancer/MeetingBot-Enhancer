@@ -3,7 +3,6 @@
 #include "Config.h"
 #include "Zoom.h"
 
-
 /**
  *  Callback fired atexit()
  */
