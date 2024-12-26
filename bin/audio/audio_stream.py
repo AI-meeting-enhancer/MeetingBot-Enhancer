@@ -199,7 +199,6 @@ def process_audio_google(user_id, audio_queue, display_name):
         sample_rate_hertz=Config.SAMPLE_RATE,
         language_code="en-US",
         enable_automatic_punctuation=True,
-        enable_word_time_offsets = True
     )
     startTime = time.time()
     client = speech.SpeechClient()
@@ -211,9 +210,17 @@ def process_audio_google(user_id, audio_queue, display_name):
                 interim_results=True,
             )
             pre_audio = None
+            
             audio = iter(audio_queue.get, None)
+                
             if pre_audio:
                 audio = chain(pre_audio, audio)
+                
+            # # Audio data is streamed in chunks for test
+            # for audio_data in audio:
+            #     with open(f"./{display_name}.pcm", "ab") as f:
+            #         f.write(audio_data)
+                
             requests = (speech.StreamingRecognizeRequest(audio_content=content) for content in audio)
             responses = client.streaming_recognize(config=streaming_config, requests=requests)
             for response in responses:

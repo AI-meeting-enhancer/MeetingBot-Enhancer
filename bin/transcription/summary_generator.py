@@ -8,7 +8,10 @@ from jinja2 import Template
 
 def extract_content(input_text):
     # Remove code block markers (```) and "json" label from the input text
-    cleaned_text = re.sub(r'```json|```', '', input_text)
+    cleaned_marks = re.sub(r'[\n\r]', '', input_text)
+    last_brace = cleaned_marks.rfind("}")+1
+    validJSON = cleaned_marks[:last_brace]
+    cleaned_text = re.sub(r'```json|```', '', validJSON)
     return cleaned_text.strip()  # Remove leading/trailing whitespace
 
 def generate_meeting_summary():
@@ -41,6 +44,7 @@ def generate_meeting_summary():
 
     print("Generating Summary...")
     # Initialize the generative AI model
+    # model = genai.GenerativeModel("tunedModels/increment-rf75bz5wosh3")
     model = genai.GenerativeModel("gemini-1.5-pro")
     # Create a prompt for the AI model to summarize the meeting
     prompt = (
@@ -52,6 +56,7 @@ def generate_meeting_summary():
     
     # Check if the response has text
     if hasattr(response, 'text'):
+        print(response.text)
         # Clean the response text
         json_response = extract_content(response.text)
         
@@ -66,8 +71,20 @@ def generate_meeting_summary():
             data.update(json.loads('{"meeting_name":"'+Config.MEETING_NAME+'", "meeting_date":"'+meeting_date+'"}'))
             
         except json.JSONDecodeError as e:
-            print("Error: Response is not valid JSON.", e)
-            return
+            
+            prompt_for_modification = f"{json_response}\n\n This is JSON response but maybe contains some issue, plz fix it into valid JSON by modifying bracket, brace and comma. Please ensure that the JSON is valid for following template. {json_template}."
+
+            try:
+                model1 = genai.GenerativeModel("gemini-1.5-pro")
+                response1 = model1.generate_content(prompt_for_modification)
+                # Check if the response is valid
+                if response1 and hasattr(response1, 'text'):
+                    refinedText = extract_content(response1.text)
+                    data = json.loads(refinedText)
+                    data.update(json.loads('{"meeting_name":"'+Config.MEETING_NAME+'", "meeting_date":"'+meeting_date+'"}'))
+            
+            except Exception as e:
+                print(f"An error occurred: {e}")
         
         # Render the HTML summary using the Jinja2 template
         template = Template(html_template)

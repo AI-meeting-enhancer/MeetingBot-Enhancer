@@ -15,6 +15,7 @@ ZoomSDKRendererDelegate::ZoomSDKRendererDelegate() {
 
 // Callback method that is triggered when a raw data frame is received
 void ZoomSDKRendererDelegate::onRawDataFrameReceived(YUVRawDataI420 *data) {
+    Log::info("Here is on received streawming...");
     // Launch an asynchronous task to process the received raw data
     auto res = async(launch::async, [&] {
         // Create an OpenCV Mat object for the I420 format
