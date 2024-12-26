@@ -19,6 +19,7 @@ bots/zoom_bot/socket_data.log
 
 # python pre-built files
 bin/*/__pycache__
+*/__pycache__
 
 # credentials
 bin/credentials/*

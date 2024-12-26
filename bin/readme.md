@@ -49,6 +49,10 @@ Download proper SDK from Zoom marketplace and copy it into ./bots/zoombot/lib/zo
 ```bash
   cd ./bots/zoom_bot/
 ```
+Build the Docker image
+```bash
+docker build -t zoom_bot-zoomsdk .
+```
 Bot Run with Google STT API for speech recognition:
 ```bash
 docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
