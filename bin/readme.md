@@ -53,7 +53,7 @@ Bot Run with Google STT API for speech recognition:
 ```bash
 docker run -v ./sock/googleApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
-Or Run with Deepgram API:
+Or Run with Deepgram API for speech recognition:
 ```bash
 docker run -v ./sock/deepgramApi/:/tmp/zoom_bot/sock/ -v .:/tmp/zoom_bot/ zoom_bot-zoomsdk
 ```
