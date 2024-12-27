@@ -1,16 +1,16 @@
 # output files
-bin/output/*
-bin/tmp/*
+output/*
+tmp/*
 venv
 
 # build files & C++ SDK
-bin/bots/zoom_bot/lib/zoomsdk/*
-bin/bots/zoom_bot/build*
-bin/bots/zoom_bot/CMakeFiles
-bin/bots/zoom_bot/out/*
-bin/bots/zoom_bot/sock/*
-bin/bots/zoom_bot/vcpkg
-bin/bots/zoom_bot/core.*
+bots/zoom_bot/lib/zoomsdk/*
+bots/zoom_bot/build*
+bots/zoom_bot/CMakeFiles
+bots/zoom_bot/out/*
+bots/zoom_bot/sock/*
+bots/zoom_bot/vcpkg
+bots/zoom_bot/core.*
 # config files
 bots/zoom_bot/config.toml
 
@@ -18,11 +18,11 @@ bots/zoom_bot/config.toml
 bots/zoom_bot/socket_data.log
 
 # python pre-built files
-bin/*/__pycache__
+*/__pycache__
 */__pycache__
 
 # credentials
-bin/credentials/*
+credentials/*
 
 # vs code config
 .vscode/
