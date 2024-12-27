@@ -23,10 +23,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.translatorApi == 'g':
-        Config.SOCKET_PATH = './bots/zoom_bot/sock/googleApi/meeting.sock'
+        Config.SOCKET_PATH = './zoom_bot/sock/googleApi/meeting.sock'
         Config.OUTPUT_FILE = './tmp/meeting_temp_google.txt'
     else:
-        Config.SOCKET_PATH = './bots/zoom_bot/sock/deepgramApi/meeting.sock'
+        Config.SOCKET_PATH = './zoom_bot/sock/deepgramApi/meeting.sock'
         Config.OUTPUT_FILE = './tmp/meeting_temp_deepgram.txt'
         
     Config.MEETING_NAME = args.meetingName
@@ -36,31 +36,31 @@ if __name__ == "__main__":
         exit(0)
 
 
-    # Delete the output file before run the Bot
-    try:
-        if os.path.exists(Config.SOCKET_PATH):
-            os.remove(Config.SOCKET_PATH)
-    except Exception as e:
-        print(f"Error deleting file: {e}")
+    # # Delete the output file before run the Bot
+    # try:
+    #     if os.path.exists(Config.SOCKET_PATH):
+    #         os.remove(Config.SOCKET_PATH)
+    # except Exception as e:
+    #     print(f"Error deleting file: {e}")
 
 
-    os.chdir("bots/zoom_bot")
-    # Prepare the command as a list
-    command = [
-        "./build_app/zoomsdk",  # Ensure this is the correct executable path
-        "RawAudio", "-t", "-s", "--sock-dir", "sock/googleApi", "--sock-file", "meeting.sock"
-    ]
+    # os.chdir("bots/zoom_bot")
+    # # Prepare the command as a list
+    # command = [
+    #     "./build_app/zoomsdk",  # Ensure this is the correct executable path
+    #     "RawAudio", "-t", "-s", "--sock-dir", "sock/googleApi", "--sock-file", "meeting.sock"
+    # ]
 
-    # Start the C++ application
-    bot_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # # Start the C++ application
+    # bot_process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    # Wait until Bot is ready
-    os.chdir("../../")
-    while True:
-        if os.path.exists(Config.SOCKET_PATH):
-            print("Bot is started successfully.\n")
-            break
-        time.sleep(1)
+    # # Wait until Bot is ready
+    # os.chdir("../../")
+    # while True:
+    #     if os.path.exists(Config.SOCKET_PATH):
+    #         print("Bot is started successfully.\n")
+    #         break
+    #     time.sleep(1)
 
     # Now that the zoomsdk has completed and the socket file is ready, start transcription
     start_real_time_transcription()
