@@ -44,7 +44,7 @@ def generate_meeting_summary():
 
     print("Generating Summary...")
     # Initialize the generative AI model
-    # model = genai.GenerativeModel("tunedModels/increment-rf75bz5wosh3")
+    # model = genai.GenerativeModel("tunedModels/increment-rf75bz5wosh3") # Use a pre-trained model
     model = genai.GenerativeModel("gemini-1.5-pro")
     # Create a prompt for the AI model to summarize the meeting
     prompt = (
@@ -71,7 +71,7 @@ def generate_meeting_summary():
             data.update(json.loads('{"meeting_name":"'+Config.MEETING_NAME+'", "meeting_date":"'+meeting_date+'"}'))
             
         except json.JSONDecodeError as e:
-            
+            # If the response is not valid JSON, try again using GEMINI
             prompt_for_modification = f"{json_response}\n\n This is JSON response but maybe contains some issue, plz fix it into valid JSON by modifying bracket, brace and comma. Please ensure that the JSON is valid for following template. {json_template}."
 
             try:
@@ -101,6 +101,3 @@ def generate_meeting_summary():
         os._exit(0)
     else:
         print("Error: No summary generated.")
-    # except Exception as e:
-    #     # Handle any exceptions that occur during the process
-    #     print(f"An error occurred: {e}")
