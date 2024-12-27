@@ -23,10 +23,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.translatorApi == 'g':
-        Config.SOCKET_PATH = './zoom_bot/sock/googleApi/meeting.sock'
+        Config.SOCKET_PATH = './bots/zoom_bot/sock/googleApi/meeting.sock'
         Config.OUTPUT_FILE = './tmp/meeting_temp_google.txt'
     else:
-        Config.SOCKET_PATH = './zoom_bot/sock/deepgramApi/meeting.sock'
+        Config.SOCKET_PATH = './bots/zoom_bot/sock/deepgramApi/meeting.sock'
         Config.OUTPUT_FILE = './tmp/meeting_temp_deepgram.txt'
         
     Config.MEETING_NAME = args.meetingName
