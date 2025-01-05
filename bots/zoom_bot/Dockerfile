@@ -2,13 +2,13 @@ FROM ubuntu:22.04 AS base
 
 SHELL ["/bin/bash", "-c"]
 
-ENV project=zoom_bot
-ENV cwd=/tmp/$project
-
-WORKDIR $cwd
+ENV root_dir /tmp/zoom_bot
+ENV project bots/zoom_bot
+ENV cwd $root_dir/$project
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+WORKDIR $cwd
 #  Install Dependencies
 RUN apt-get update  \
     && apt-get install -y \
@@ -41,8 +41,16 @@ RUN apt-get update  \
     pkgconf \
     tar \
     unzip \
-    zip
-
+    zip \
+    python3 \
+    python3-pip
+    
+RUN pip install --no-cache-dir \
+    google-cloud-speech \
+    google-generativeai \
+    jinja2 \
+    deepgram-sdk \
+    python-dotenv
 # Install ALSA
 RUN apt-get install -y libasound2 libasound2-plugins alsa alsa-utils alsa-oss
 
@@ -64,6 +72,7 @@ RUN git clone --depth 1 https://github.com/Microsoft/vcpkg.git \
 FROM deps AS build
 
 WORKDIR $cwd
-ENTRYPOINT ["/tini", "--", "./bin/entry.sh"]
+ENTRYPOINT ["/tini", "--", "./bots/zoom_bot/bin/entry.sh"]
 
-
+WORKDIR $root_dir
+CMD ["python", "main.py", "-t","g", "-n", "TempUser"]

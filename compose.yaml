@@ -1,8 +1,8 @@
 services:
   zoomsdk: &zoomsdk
-    build: ./
+    build: ./bots/zoom_bot
     platform: linux/amd64
     volumes:
-     - .:/tmp/zoom_bot
+      - .:/tmp/zoom_bot
     ports:
       - "3000:3000"

@@ -8,7 +8,8 @@ SocketServer::SocketServer() {
     // Retrieve Socket Path from config
     std::string sock_dir = Zoom::getInstance().m_config.socketDir();
     std::string sock_file = Zoom::getInstance().m_config.socketFile();
-    c_socketPath = "./" + sock_dir + "/" + sock_file;
+    // c_socketPath = "./" + sock_dir + "/" + sock_file;
+    c_socketPath = "/tmp/zoom_bot/bots/zoom_bot/sock/" + sock_file;
 }
 
 // Destructor: Cleanup resources when the object is destroyed
