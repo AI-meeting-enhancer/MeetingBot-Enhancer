@@ -12,7 +12,8 @@
 // #include "meeting_service_components/meeting_participants_ctrl_interface.h"
 
 #include "../util/Log.h"
-#include "../util/SocketServer.h"
+// #include "../util/SocketServer.h"
+#include "../util/SocketTCPServer.h"
 
 using namespace std;
 using namespace ZOOMSDK;
@@ -20,7 +21,8 @@ using namespace ZOOMSDK;
 class ZoomSDKAudioRawDataDelegate : public IZoomSDKAudioRawDataDelegate {
     std::unordered_map<uint32_t, std::string> m_userDisplayNames; // Map to store display names
 
-    SocketServer server;
+    // SocketServer server;
+    SocketTCPServer server;
 
     string m_dir = "out";
     string m_filename = "test.pcm";

@@ -5,4 +5,4 @@ services:
     volumes:
      - .:/tmp/zoom_bot
     ports:
-      - "3000:3000"
+      - "44444:44444"
