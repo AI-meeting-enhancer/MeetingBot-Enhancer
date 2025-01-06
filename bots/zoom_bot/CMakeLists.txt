@@ -51,6 +51,8 @@ add_executable(zoomsdk src/main.cpp
         src/raw_send/ZoomSDKVideoSource.cpp
         src/util/SocketServer.h
         src/util/SocketServer.cpp
+        src/util/SocketTCPServer.h
+        src/util/SocketTCPServer.cpp
 )
 
 

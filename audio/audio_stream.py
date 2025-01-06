@@ -2,7 +2,7 @@ import threading
 import struct, time
 from google.cloud import speech
 from google.api_core.exceptions import OutOfRange
-from .socket_connection import connect_unix_socket
+from .socket_connection import connect_unix_socket, connect_tcp_socket
 from transcription.transcription_handler import save_transcription_in_real_time
 from config.settings import Config
 from transcription.summary_generator import generate_meeting_summary
@@ -296,7 +296,7 @@ def handle_stream(sock):
 
 
 def stream_audio_to_text():
-    sock = connect_unix_socket()
+    sock = connect_tcp_socket()
     try:
         handle_stream(sock)
     finally:
