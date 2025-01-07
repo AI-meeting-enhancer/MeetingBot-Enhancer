@@ -39,24 +39,38 @@ def audio_generator(sock):
     index_size = 4  # Size for the user index
     display_name_size = 50  # Size for the display name
 
+    read_packet = 0
+    intr_packet = 0
     while True:
         try:
             # Read the length of the incoming message (4 bytes)
             length_bytes = sock.recv(4)
             if not length_bytes:
                 break  # Connection closed
-
+            
+            read_packet += 1
             # Unpack the length (network byte order to host byte order)
             message_length = struct.unpack('<I', length_bytes)[0]  # '!I' means big-endian unsigned int
+            
+            print(f"message length: {message_length} | {read_packet}|{intr_packet}  ", end='\r')
 
-            # Read the actual message based on the lengt
+            # Now read the actual data based on the length
             data = sock.recv(message_length)
+            is_int = 1
+            while len(data) < message_length:
+                chunk = sock.recv(message_length - len(data))
+                if is_int == 1:
+                    intr_packet += 1
+                is_int = 0
+                if not chunk:
+                    raise ConnectionError("Connection closed unexpectedly")
+                data += chunk
 
             if not data:
-                print(f"Error : No data received from socket")
+                print(f"Error : No data received from socket : {message_length}")
                 break
             if len(data) < index_size + display_name_size:
-                print("Received data is too short to contain user ID and display name.")
+                print(f"Received data is too short to contain user ID and display name. : {message_length}")
                 continue
             
             # Extract user index
