@@ -69,22 +69,11 @@ def audio_generator(sock):
                 if not chunk:
                     raise ConnectionError("Connection closed unexpectedly")
                 data += chunk
-            is_int = 1
-            while len(data) < message_length:
-                chunk = sock.recv(message_length - len(data))
-                if is_int == 1:
-                    intr_packet += 1
-                is_int = 0
-                if not chunk:
-                    raise ConnectionError("Connection closed unexpectedly")
-                data += chunk
 
             if not data:
                 print(f"Error : No data received from socket : {message_length}")
-                print(f"Error : No data received from socket : {message_length}")
                 break
             if len(data) < index_size + display_name_size:
-                print(f"Received data is too short to contain user ID and display name. : {message_length}")
                 print(f"Received data is too short to contain user ID and display name. : {message_length}")
                 continue
             
